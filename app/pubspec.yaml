@@ -33,9 +33,11 @@ dependencies:
 
   geolocator:
   background_fetch: '^0.7.0'
+  flutter_background_service: ^0.1.5
 
   provider:
   background_location: ^0.7.0
+  intl:
 
   webview_flutter: ^1.0.6
   local_auth:

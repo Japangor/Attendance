@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:api_sdk/api_constants.dart';
 
 import 'package:app/src/config/image_constants.dart';
+import 'package:app/src/screens/drawer.dart';
 import 'package:app/src/screens/home/index.dart';
 import 'package:app/src/utils/app_state_notifier.dart';
 import 'package:app/src/widgets/cache_image_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:shared/main.dart';
@@ -18,13 +20,19 @@ import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
-
-SharedPreferences prefs;
-final String attand="";
+import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 final bool _visible = false;
+String attand;
+class attendance extends StatefulWidget {
+  @override
+  attendancee createState() => attendancee();
+}
+Map<String, String> globals = {
+  "success": "",
+};
 
-class attendance extends StatelessWidget {
-
+class attendancee extends State<attendance> {
 
   // ignore: close_sinks
   final AuthenticationBloc authenticationBloc =
@@ -34,9 +42,11 @@ class attendance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+    var now = new DateTime.now();
+    var formatter = new DateFormat('yyyy-MM-dd');
+    String formattedDate = formatter.format(now);
+    String formattedTime = DateFormat.Hm().format(now);
     authenticationBloc.add(GetUserData());
-main2();
 
     return WillPopScope(
         onWillPop: () async => true,
@@ -48,6 +58,43 @@ main2();
             builder: (BuildContext context, AuthenticationState state) {
 
               if (state is SetUserData) {
+
+                main2() async{
+
+                  String attand;
+                  var attendance = '${apiConstants["auth"]}/AttendanceGetAPI';
+                  Map<String, String> queryParams = {
+                    'EmpCode': state.currentUserData.id,
+                    'selecteddate': DateTime.now().toString()
+
+                  };
+
+                  var attendheaders = {
+                    HttpHeaders.contentTypeHeader: 'application/json',
+                  };
+
+                  String attendquery = Uri(queryParameters: queryParams).query;
+
+                  var attendUrl = attendance + '?' + attendquery; // result - https://www.myurl.com/api/v1/user?param1=1&param2=2
+                  var attendresponse = await http.get(attendUrl, headers: attendheaders);
+                  Map<String, dynamic> attendresponseJson = json.decode(attendresponse.body);
+                  attand=attendresponseJson['success'];
+                  setState(() {
+                    globals["success"] = attendresponseJson['success'];
+
+
+
+                  });
+
+
+                }
+                main2();
+
+
+
+
+
+
                 return Scaffold (
                   appBar: AppBar(
                     centerTitle: true,
@@ -66,89 +113,70 @@ main2();
                   body:
                   Column(
                     children: <Widget>[
-                      Visibility(visible:_visible ,child: TextButton(style: string_constants.flatButtonStyle,
+
+
+
+
+                      if(globals["success"].contains("true")) TextButton(style: string_constants.flatButtonStyle,
                         onPressed: () async {
                           bool isAuthenticated =
                           await localAuthentication.authenticate(localizedReason: "Give your biometric");
 
                           if (isAuthenticated) {
-                            var _dio = Dio();
 
-                            var formData = FormData.fromMap({
-                              'pkEmpId': state.currentUserData.id,
-                              'selecteddate': DateTime.now(),
-                              'punchtype':"I"
-                            });
-                            Response response = await _dio.post('${apiConstants["AttendancePostAPI"]}',
-                              options: Options(headers: {
-                                HttpHeaders.contentTypeHeader: "application/json",
-                              }),
-                              data: jsonEncode(formData),
+
+                            var requestBody = {
+                              'EmpCode': state.currentUserData.EmpCode,
+                              'selecteddate': formattedDate,
+                              'time': formattedTime,
+                              'punchtype': "IN"
+                            };
+
+                            http.Response response = await http.post(
+                              '${apiConstants["AttendancePostAPI"]}',
+                              body: requestBody,
                             );
+
+                            print(response.body);
+
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(response.body.toString()),
+                            ));
 
                           } else {
                             print("Failed");
                           }
                         },
                         child: Text('Punch In'),),
-                      ),
 
 
-                   TextButton(style: string_constants.flatButtonStyle,
-                  onPressed: () async {
-                    bool isAuthenticated =
-                    await localAuthentication.authenticate(localizedReason: "Give your biometric");
+                      if(globals["success"].contains("false")) TextButton(style: string_constants.flatButtonStyle,  onPressed: () async {
+                        bool isAuthenticated =
+                        await localAuthentication.authenticate(localizedReason: "Give your biometric");
 
-                    if (isAuthenticated) {
-                      var _dio = Dio();
-
-                      var formData = FormData.fromMap({
-                        'pkEmpId': state.currentUserData.id,
-                        'selecteddate': DateTime.now(),
-                        'punchtype':"I"
-                      });
-                      Response response = await _dio.post('${apiConstants["AttendancePostAPI"]}',
-                        options: Options(headers: {
-                          HttpHeaders.contentTypeHeader: "application/json",
-                        }),
-                        data: jsonEncode(formData),
-                      );
-
-                    } else {
-                     print("Failed");
-                    }
-                  },
-                  child: Text('Punch In'),),
+                        if (isAuthenticated) {
 
 
-                     TextButton(style: string_constants.flatButtonStyle,  onPressed: () async {
-                       bool isAuthenticated =
-                       await localAuthentication.authenticate(localizedReason: "Give your biometric");
+                          var requestBody = {
+                            'EmpCode': state.currentUserData.EmpCode,
+                            'selecteddate': formattedDate,
+                            'time': formattedTime,
+                            'punchtype': "OUT"
+                          };
 
-                       if (isAuthenticated) {
-
-
-                         var _dio = Dio();
-
-                         var formData = FormData.fromMap({
-                           'pkEmpId': state.currentUserData.id,
-                           'selecteddate': DateTime.now(),
-                           'punchtype':"O"
-                         });
-                         Response response = await _dio.post('${apiConstants["AttendancePostAPI"]}',
-                           options: Options(headers: {
-                             HttpHeaders.contentTypeHeader: "application/json",
-                           }),
-                           data: jsonEncode(formData),
-
-                         );
-                         print(response);
+                          http.Response response = await http.post(
+                            '${apiConstants["AttendancePostAPI"]}',
+                            body: requestBody,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(response.body.toString()),
+                          ));
 
 
-                       } else {
-                         print("Failed");
-                       }
-                     }, child: Text('Punch Out'),),
+                        } else {
+                          print("Failed");
+                        }
+                      }, child: Text('Punch Out'),),
 
 
 
@@ -156,92 +184,7 @@ main2();
                     ],
                   ),
 
-                  drawer: Drawer(
-                    child: ListView(
-                      padding: EdgeInsets.zero,
-                      children: <Widget>[
-                        DrawerHeader(
-
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(50),
-                                        color: Colors.white),
-                                    child: CachedImage(
-                                      imageUrl:
-                                      state.currentUserData.profilePic,
-                                      fit: BoxFit.fitWidth,
-                                      errorWidget: Image.network(
-                                        AllImages().kDefaultImage,
-                                      ),
-                                      width: 80,
-                                      height: 80,
-                                      placeholder: CircularProgressIndicator(),
-                                    ),
-                                  ),
-
-                                  Switch(
-                                    value:
-                                    Provider.of<AppStateNotifier>(context)
-                                        .isDarkMode,
-                                    onChanged: (value) {
-                                      Provider.of<AppStateNotifier>(context,
-                                          listen: false)
-                                          .updateTheme(value);
-                                    },
-                                  ),
-                                ],
-
-
-                              ),
-
-                            ],
-                          ),
-
-
-
-
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).dividerColor,
-                          ),
-
-                        ),
-                        TextButton(
-                          style: string_constants.flatButtonStyle,
-                          onPressed: () {
-                            print("dash");
-                            Navigator.pushReplacementNamed(context,'/home');
-                          },
-                          child: Text('Click here for Dashboard'),
-                        ),
-                        ListTile(
-                          title: Text("Employe"+
-                              '${state.currentUserData.Employee} ',
-                              style: Theme.of(context).textTheme.bodyText2),
-                        ),
-                        ListTile(
-                          title: Text("EmpRole: "+state.currentUserData.EmpRole,
-                              style: Theme.of(context).textTheme.bodyText2),
-                        ),
-                        ListTile(
-                          title: Text("Emp Id: "+state.currentUserData.id.toString(),
-                              style: Theme.of(context).textTheme.bodyText2),
-                        ),  ListTile(
-                          title: Text("Emp Code: "+state.currentUserData.EmpCode.toString(),
-                              style: Theme.of(context).textTheme.bodyText2),
-                        ),
-
-                      ],
-                    ),
-                  ),
+                  drawer: navigationDrawer(),
                 );
               }
               return Scaffold(
@@ -250,17 +193,7 @@ main2();
               );
             }));
   }
-}
-void main2() async{
-  String attand;bool _visible;
-  final SharedPreferences sharedPreferences = await prefs;
-  prefs = await SharedPreferences.getInstance();
-  attand=prefs.getString('attendancetype');
-  if(attand=='false')
-    {
-      _visible=true;
-    }
-  print(attand+"safgas");
+// every method which changes state should exist within class only
 
 
 }

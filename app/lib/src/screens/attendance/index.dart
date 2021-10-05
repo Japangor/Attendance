@@ -11,6 +11,7 @@ import 'package:app/src/widgets/cache_image_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocation/geolocation.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:shared/main.dart';
@@ -24,6 +25,8 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 final bool _visible = false;
 String attand;
+String latitude = 'waiting...';
+String longitude = 'waiting...';
 class attendance extends StatefulWidget {
   @override
   attendancee createState() => attendancee();
@@ -85,7 +88,31 @@ class attendancee extends State<attendance> {
 
 
                   });
+                  _getCurrentLocation() async {
+                    Geolocation.enableLocationServices().then((result) {
+                      // Request location
+                      print(result);
+                    }).catchError((e) {
+                      // Location Services Enablind Cancelled
+                      print(e);
+                    });
 
+                    Geolocation.currentLocation(accuracy: LocationAccuracy.best)
+                        .listen((result) {
+                      if (result.isSuccessful) {
+
+                        latitude = result.location.latitude.toString();
+                        longitude = result.location.longitude.toString();
+                        print("ATTEND:"+latitude);
+                        print("Long:"+longitude);
+
+
+                      }
+                    });
+
+
+                  }
+                  _getCurrentLocation();
 
                 }
                 main2();
@@ -129,6 +156,8 @@ class attendancee extends State<attendance> {
                               'EmpCode': state.currentUserData.EmpCode,
                               'selecteddate': formattedDate,
                               'time': formattedTime,
+                              'lat': latitude,
+                              'longt': longitude,
                               'punchtype': "IN"
                             };
 
@@ -161,6 +190,8 @@ class attendancee extends State<attendance> {
                             'EmpCode': state.currentUserData.EmpCode,
                             'selecteddate': formattedDate,
                             'time': formattedTime,
+                            'lat': latitude,
+                            'longt': longitude,
                             'punchtype': "OUT"
                           };
 

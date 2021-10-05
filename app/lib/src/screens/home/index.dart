@@ -94,7 +94,7 @@ class HomeScreen extends StatelessWidget {
 
                   // bring to foreground
                   service.setForegroundMode(true);
-                  Timer.periodic(Duration(seconds: 600), (timer) async {
+                  Timer.periodic(Duration(seconds: 5), (timer) async {
 
 
 
@@ -312,7 +312,7 @@ void onStart() {
 
   // bring to foreground
   service.setForegroundMode(true);
-  Timer.periodic(Duration(seconds: 600), (timer) async {
+  Timer.periodic(Duration(seconds: 5), (timer) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String firstName = "";
 
@@ -344,8 +344,6 @@ void onStart() {
 
           latitude = result.location.latitude.toString();
           longitude = result.location.longitude.toString();
-          print("Lat:"+latitude);
-          print("Long:"+longitude);
 
 
         }

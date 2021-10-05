@@ -18,32 +18,33 @@ class _LoginFormState extends State<LoginForm> {
   String latitude = '00.00000';
   String longitude = '00.00000';
 
+  _getCurrentLocation() async {
+    Geolocation.enableLocationServices().then((result) {
+      // Request location
+      print(result);
+    }).catchError((e) {
+      // Location Services Enablind Cancelled
+      print(e);
+    });
 
+    Geolocation.currentLocation(accuracy: LocationAccuracy.best)
+        .listen((result) {
+      if (result.isSuccessful) {
+        setState(() {
+          latitude = result.location.latitude.toString();
+          longitude = result.location.longitude.toString();
+          print("Lat:"+latitude);
+          print("Long:"+longitude);
+
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    _getCurrentLocation() async {
-      Geolocation.enableLocationServices().then((result) {
-        // Request location
-        print(result);
-      }).catchError((e) {
-        // Location Services Enablind Cancelled
-        print(e);
-      });
 
-      Geolocation.currentLocation(accuracy: LocationAccuracy.best)
-          .listen((result) {
-        if (result.isSuccessful) {
-          setState(() {
-            latitude = result.location.latitude.toString();
-            longitude = result.location.longitude.toString();
-            print("Lat:"+latitude);
-            print("Long:"+longitude);
 
-          });
-        }
-      });
-    }
 
     return Form(
 
@@ -88,6 +89,7 @@ class _LoginFormState extends State<LoginForm> {
           const SizedBox(
             height: 16,
           ),
+
           RaisedButton(
               color: Theme.of(context).primaryColor,
               textColor: Colors.white,
@@ -102,8 +104,9 @@ class _LoginFormState extends State<LoginForm> {
                   : Text('Login', style: Theme.of(context).textTheme.bodyText1),
               onPressed: () {
 
-                _getCurrentLocation();
                 if (_key.currentState.validate()) {
+                  _getCurrentLocation();
+
                   widget.authenticationBloc.add(UserLogin(
                       email: _emailController.text,
                       password: _passwordController.text,lat: latitude,long: longitude));
